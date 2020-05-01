@@ -2,9 +2,9 @@
  * @author: chris
  * Date     2020-04-15
  */
-import '@/assets/style/index.css'
-import '@/assets/style/style.less'
+import Vue from "vue"
+import App from "@/App"
 
-
-let j = 'kaka'
-console.log(j)
+new Vue({
+    render: h => h(App)
+}).$mount('#app')

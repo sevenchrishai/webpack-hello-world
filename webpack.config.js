@@ -21,7 +21,6 @@ const VueLoaderPlugin = require("vue-loader/lib/plugin")
 const Webpack = require("webpack")
 
 module.exports = {
-    mode: "development",    // 开发模式,development,production
     entry: [    // 入口文件
         '@babel/polyfill',  // @babel/polyfill 会转义新API(promise、Generator、Set、Maps、Proxy等)
         path.resolve(__dirname, 'src/js/index.js')  // 单入口文件（默认入口文件）
@@ -33,13 +32,9 @@ module.exports = {
         filename: "[name].[hash:8].js", // 打包后的文件名称，hash值为了解决缓存，如不设置name默认是 main.js
         path: path.resolve(__dirname, 'dist')   // 打包后的目录
     },
-    devServer: {
-        port: 7777,
-        hot: true,
-    },
     plugins: [
         new HtmlWebPackPlugin({ // 为设置的入口html自动加上打包好的js
-            template: path.resolve(__dirname, 'src/index.html')  // index.html自动加上打包好的main.js
+            template: path.resolve(__dirname, 'public/index.html')  // index.html自动加上打包好的main.js
         }),
         // new HtmlWebPackPlugin({  // 如果有多个入口文件
         //     template: path.resolve(__dirname, 'src/header.html'),
@@ -53,7 +48,6 @@ module.exports = {
             chunkFilename: '[id].css'
         }),
         new VueLoaderPlugin(),  // vue-loader 解析vue文件
-        new Webpack.HotModuleReplacementPlugin(),   // 配置webpack-dev-server进行热更新, npm i -D webpack-dev-server
     ],
     module: {
         rules: [
