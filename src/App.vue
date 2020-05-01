@@ -11,6 +11,9 @@
             return {
                 msg: 'App.vue'
             }
+        },
+        created() {
+            console.log('webpack-hello-world')
         }
     }
 </script>
