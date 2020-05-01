@@ -1,21 +1,24 @@
 const path = require("path")    // path 处理文件路径
 /**
- * npm i -D html-webpack-plugin
  * 插件：为设置的入口html自动加上打包好的output设置的js
  * <script src="main.12a27db5.js"></script>
  * @type {HtmlWebpackPlugin}
  */
 const HtmlWebPackPlugin = require("html-webpack-plugin")
 /**
- * npm i -D clean-webpack-plugin
  * 插件：打包前清空文件夹
  */
 const {CleanWebpackPlugin} = require("clean-webpack-plugin")
 /**
- * npm i -D mini-css-extract-plugin
  * 拆分css，用外链的方式引入；
  */
 const MiniCssExtractPlugin = require("mini-css-extract-plugin")
+/**
+ * vue-loader 用于解析.vue文件
+ * @type {VueLoaderPlugin}
+ */
+const VueLoaderPlugin = require("vue-loader/lib/plugin")
+const Webpack = require("webpack")
 
 module.exports = {
     mode: "development",    // 开发模式,development,production
@@ -29,6 +32,10 @@ module.exports = {
     output: {
         filename: "[name].[hash:8].js", // 打包后的文件名称，hash值为了解决缓存，如不设置name默认是 main.js
         path: path.resolve(__dirname, 'dist')   // 打包后的目录
+    },
+    devServer: {
+        port: 7777,
+        hot: true,
     },
     plugins: [
         new HtmlWebPackPlugin({ // 为设置的入口html自动加上打包好的js
@@ -44,7 +51,9 @@ module.exports = {
             // 类似 output 里面的配置
             filename: '[name].[hash].css',
             chunkFilename: '[id].css'
-        })
+        }),
+        new VueLoaderPlugin(),  // vue-loader 解析vue文件
+        new Webpack.HotModuleReplacementPlugin(),   // 配置webpack-dev-server进行热更新, npm i -D webpack-dev-server
     ],
     module: {
         rules: [
@@ -61,12 +70,21 @@ module.exports = {
             },
             {
                 test: /\.css$/, // 需要loader解析我们的css;    npm i -D style-loader css-loader
-                use: [MiniCssExtractPlugin.loader, 'style-loader', 'css-loader']// 从右向左解析原则
+                use: [ 'style-loader', 'css-loader',{
+                    loader: "postcss-loader",   // npm i -D postcss-loader autoprefixer
+                    options: {
+                        plugins: [require('autoprefixer')]  //为css添加浏览器前缀；
+                        // 另一种写法：在项目根目录创建postcss.config.js文件，
+                        // module.exports = {
+                        //     plugins: [require('autoprefixer')]  // 引用该插件即可了
+                        // }
+                    }
+                }]// 从右向左解析原则
             },
             {
                 test: /\.less$/,    // 如果使用less,需要 npm i -D less less-loader
                 use: [
-                    MiniCssExtractPlugin.loader, // 拆分css，用外链的方式引入；
+                    // MiniCssExtractPlugin.loader, // 拆分css，用外链的方式引入；一般是生产环境中用到
                     'style-loader','css-loader',{
                         loader: "postcss-loader",   // npm i -D postcss-loader autoprefixer
                         options: {
@@ -80,6 +98,10 @@ module.exports = {
                 ]// 从右向左解析原则
             },
             {
+                test: /\.html$/,    // 在html里写 img src, 引入图片用到
+                use: ['html-loader']
+            },
+            {
                 test: /\.(jpe?g|png|gif)$/i,    // 图片文件
                 use: [
                     {
@@ -88,6 +110,8 @@ module.exports = {
                          * url-loader 一般和 file-loader 搭配使用
                          * 如果文件小于限制的大小,则会返回 base64 编码，
                          * 否则使用 file-loader 将文件移动到输出的目录中
+                         * css 里的图片会解析
+                         * ? html img src 不解析，如果要在 html 使用img src引入图片的话，用 html-loader 吧 ?
                          */
                         loader: "url-loader",
                         options: {
@@ -95,7 +119,7 @@ module.exports = {
                             fallback: {
                                 loader: 'file-loader',
                                 options: {
-                                    name: 'img/[name].[hash:8].[ext]'
+                                    name: 'img/[name].[hash:8].[ext]'   //
                                 }
                             }
                         }
@@ -103,7 +127,7 @@ module.exports = {
                 ]
             },
             {
-                test: /\.(mp4|webm|ogg|mp3|wav|flac|aac)(\?.*)?$/,//媒体文件
+                test: /\.(mp4|webm|ogg|mp3|wav|flac|aac)(\?.*)?$/,  // 媒体文件
                 use: [
                     {
                         loader: "url-loader",
@@ -120,7 +144,7 @@ module.exports = {
                 ]
             },
             {
-                test: /\.(woff2?|eot|ttf|otf)(\?.*)?$/i,// 字体
+                test: /\.(woff2?|eot|ttf|otf)(\?.*)?$/i,    // 字体
                 use: [
                     {
                         loader: "url-loader",
@@ -135,7 +159,19 @@ module.exports = {
                         }
                     }
                 ]
+            },
+            {
+                test: /\.vue$/,
+                use: ['vue-loader']
             }
         ]
+    },
+    resolve: {
+        alias: {    // 创建 import 或 require 的别名
+            'vue$': 'vue/dist/vue.runtime.esm.js',  // 末尾添加 $，以表示精准匹配
+            '@': path.resolve(__dirname, 'src')
+        },
+        extensions: ['*', '.js', '.json', '.vue']   // 自动解析确定的扩展，能够使用户在引入模块时不带扩展：import File from '../path/to/file'
+        // 默认值为：[".js", ".json"]
     }
 }
