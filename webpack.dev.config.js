@@ -4,7 +4,7 @@ const WebpackMerge = require("webpack-merge")
 const WebpackConfig = require("./webpack.config")
 
 module.exports = WebpackMerge(WebpackConfig, {
-    mode: "development",    // 开发模式,development,production
+    mode: "development",    // 开发模式,development,production；不设置默认是production
     devtool: "cheap-module-eval-source-map",
     devServer: {
         port: 7777,

@@ -20,6 +20,8 @@ const MiniCssExtractPlugin = require("mini-css-extract-plugin")
 const VueLoaderPlugin = require("vue-loader/lib/plugin")
 const Webpack = require("webpack")
 
+const ISPROD = ['production'].includes(process.env.NODE_ENV)
+
 module.exports = {
     entry: [    // 入口文件
         '@babel/polyfill',  // @babel/polyfill 会转义新API(promise、Generator、Set、Maps、Proxy等)
@@ -48,6 +50,10 @@ module.exports = {
             chunkFilename: '[id].css'
         }),
         new VueLoaderPlugin(),  // vue-loader 解析vue文件
+        new Webpack.ProvidePlugin({ // webpack 内置模块 ProvidePlugin，全局引入第三方库；
+            // 在使用时将不再需要import和require进行引入，直接使用即可。
+            '_': 'lodash'
+        })
     ],
     module: {
         rules: [
@@ -160,12 +166,20 @@ module.exports = {
             }
         ]
     },
-    resolve: {
+    resolve: {  // 解析
         alias: {    // 创建 import 或 require 的别名
             'vue$': 'vue/dist/vue.runtime.esm.js',  // 末尾添加 $，以表示精准匹配
             '@': path.resolve(__dirname, 'src')
         },
         extensions: ['*', '.js', '.json', '.vue']   // 自动解析确定的扩展，能够使用户在引入模块时不带扩展：import File from '../path/to/file'
         // 默认值为：[".js", ".json"]
-    }
+    },
+    externals: ISPROD ? {    // 外部扩展，提供了从输出的 bundle 中排除依赖的方法
+        // 例如vue.js 、vuex.js 、vue-router.js 这些外部库，基本不会变的，
+        // 如果将它们独立出来单独加载就能利于浏览器的缓存机制，不用每次都重新加载这些库js，
+        // 并且大大的减少了打包的vendor.js文件,
+        // 配置最好在生产环境的时候配置,建议项目体量较大的项目再用比较合适
+        'jquery': 'jQuery', // key: import from 'jquery';  value: 通过script方式引入js库后它的全局变量
+        'vue': 'Vue'
+    } : {}
 }
